@@ -83,63 +83,88 @@
 			divID: 'cover-plugin-div',
 			loader: 'loader.gif',
 			backgroundColor: 'transparent',
+			resizeEvent: 'resize',
+			closeDiv: '<div class="close"><i title="Close" class="icon-exit-20"></i></div>',
+			viewportFill: 0.9,
+			alwaysFill: false,
 			duration: 200
-		};
-		var settings = $.extend({}, defaults, options);
-		var cover = $("<div id='" + settings.divID + "'></div>");
-		cover.click(function() {
-			// process again because it may have changed by scroll or whatever
-			cover.stop(true, true).animate({
-				left: $this.offset().left - $(window).scrollLeft() + 'px',
-				top: $this.offset().top - $(window).scrollTop() + 'px',
-				width: $this.width() + 'px',
-				height: $this.height() + 'px'
-			}, settings.duration, function() {
-				cover.remove();
-				if (settings.onClose) {
-					settings.onClose.call($this);
-				}
-			});
-		});
+		},
+			settings = $.extend({}, defaults, options),
+			cover = $("<div id='" + settings.divID + "'></div>");
 
 		cover.css({
 			position: 'fixed',
-			zIndex: 1000,
 			backgroundRepeat: "no-repeat",
 			backgroundPosition: "center center",
-			left: $this.offset().left - $(window).scrollLeft() + 'px',
-			top: $this.offset().top - $(window).scrollTop() + 'px',
+			left: $this.offset().left - $w.scrollLeft() + 'px',
+			top: $this.offset().top - $w.scrollTop() + 'px',
 			width: $this.width() + 'px',
 			height: $this.height() + 'px'
 		});
 
-		var timeout = setTimeout(function() {
+		var timeout = window.setTimeout(function() {
 			// Should not show briefly when image is loaded
+			$wrap.css('opacity', 0.5);
+
 			cover.css({
 				backgroundImage: "url(" + settings.loader + ")",
 				backgroundColor: settings.backgroundColor
 			});
 		}, 250);
-		$('body').append(cover);
+
+		var $wrap = $('<div/>').attr('id', settings.divID + '_wrap').append(cover);
+
+		if (settings.closeDiv)
+			$wrap.prepend(settings.closeDiv);
+
+		$wrap.click(function() {
+			// process again because it may have changed by scroll or whatever
+			cover.stop(true, true).animate({
+				left: $this.offset().left - $w.scrollLeft() + 'px',
+				top: $this.offset().top - $w.scrollTop() + 'px',
+				width: $this.width() + 'px',
+				height: $this.height() + 'px'
+			}, settings.duration, function() {
+				cover.parent().remove();
+				if (settings.onClose) {
+					settings.onClose.call($this);
+				}
+			});
+
+			$wrap.css('opacity', 0);
+			$w.off(settings.resizeEvent + '.cover');
+		});
+
+		$('body').append($wrap);
 
 		preloadImage(href, function() {
-			clearTimeout(timeout);
+			window.clearTimeout(timeout);
+
+			var dim = calcPosition(this, settings),
+				w = this.width,
+				h = this.height;
+
 			cover
 				.css({
 					backgroundImage: "url(" + href + ")",
 					backgroundSize: "cover"
 				})
 				.stop(true, true)
-				.animate({
-					left: '0px',
-					top: '0px',
-					width: '100%',
-					height: '100%'
-				}, settings.speed, function() {
+				.animate(dim, settings.speed, function() {
+					$w.on(settings.resizeEvent + '.cover', function(e) {
+						var new_dim = calcPosition({
+							width: w,
+							height: h
+						}, settings);
+
+						cover.css(new_dim);
+					});
 					if (settings.onOpen) {
 						settings.onOpen.call($this);
 					}
 				});
+
+			$wrap.css('opacity', 1);
 		});
 	};
 
