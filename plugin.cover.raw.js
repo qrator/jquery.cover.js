@@ -5,6 +5,77 @@
 		$('<img/>').load(function() {
 			if (callback) callback.call(context || this, src);
 		}).attr('src', src);
+	}, 
+		$w = $(window),
+
+	calcPosition = function(img, settings) {
+		var wHeight = $w.height(),
+			wWidth = $w.width(),
+			iHeight = img.height,
+			iWidth = img.width,
+			left, top, w, h;
+
+		if (!iHeight || !iWidth) {
+			left = top = '0px';
+			w = '100%';
+			h = '100%';
+		} else {
+			var rate = iWidth / iHeight;
+
+			if (settings.alwaysFill) {
+				var wRate = wWidth / wHeight;
+				if (rate >= wRate) {
+					iWidth = settings.viewportFill * wWidth;
+					iHeight = iWidth / rate;
+				} else {
+					iHeight = settings.viewportFill * wHeight;
+					iWidth = rate * iHeight;
+				}
+			} else {
+				if (iHeight > wHeight) {
+					iHeight = settings.viewportFill * wHeight;
+					iWidth = rate * iHeight;
+				}
+
+				if (iWidth > wWidth) {
+					iWidth = settings.viewportFill * wWidth;
+					iHeight = iWidth / rate;
+				}
+			}
+
+			left = ((wWidth - iWidth) / 2) + 'px';
+			top = ((wHeight - iHeight) / 2) + 'px';
+			w = iWidth + 'px';
+			h = iHeight + 'px';
+		}
+
+		return {
+			left: left,
+			top: top,
+			width: w,
+			height: h
+		};
+	};
+
+	$.fn.cover_close = function() {
+		var $image_preview = $('#cover-plugin-div'),
+			$image_preview_wrap = $('#cover-plugin-div_wrap');
+
+		if ($image_preview_wrap.length == 1) {
+			$image_preview_wrap.trigger('click');
+			return true;
+		}
+
+		if ($image_preview.length > 0) {
+			$image_preview.parent().remove();
+			return true;
+		}
+
+		return false;
+	};
+
+	$.fn.cover_is_open = function() {
+		return $('#cover-plugin-div').length > 0;
 	};
 
 	$.fn.cover_open = function($this, href, options) {
