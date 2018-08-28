@@ -2,7 +2,7 @@
 (function($) {
 
 	var preloadImage = function(src, callback, context) {
-		$('<img/>').load(function() {
+		$('<img/>').on('load', function() {
 			if (callback) callback.call(context || this, src);
 		}).attr('src', src);
 	}, 
@@ -101,6 +101,8 @@
 			width: $this.width() + 'px',
 			height: $this.height() + 'px'
 		});
+
+		cover.addClass(settings.className);
 
 		var timeout = window.setTimeout(function() {
 			// Should not show briefly when image is loaded
